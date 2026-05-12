@@ -166,11 +166,21 @@ var (
 	hwndMain  uintptr
 	hwndBtn   uintptr
 	cats      []string
+	deck      []int
 	hBitmap   uintptr
 	bmpW, bmpH int
 	statusTxt  = "Kliknij przycisk, zeby wylosowac kota!"
 	bgBrush    uintptr
 )
+
+func nextCat() int {
+	if len(deck) == 0 {
+		deck = rand.Perm(len(cats))
+	}
+	idx := deck[len(deck)-1]
+	deck = deck[:len(deck)-1]
+	return idx
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -290,7 +300,7 @@ func wndProc(hwnd, message, wParam, lParam uintptr) uintptr {
 			pInvalidateRect.Call(hwnd, 0, 1)
 			go func() {
 				time.Sleep(time.Second)
-				idx := rand.Intn(len(cats))
+				idx := nextCat()
 				pPostMessageW.Call(hwnd, wmKatLoaded, uintptr(idx), 0)
 			}()
 		}
