@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
 echo.
-echo  =========================
+echo  ==========================
 echo   Budowanie LosowanieKota
-echo  =========================
+echo  ==========================
 echo.
 
 where go >nul 2>&1
@@ -15,32 +15,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where gcc >nul 2>&1
-if errorlevel 1 (
-    echo BLAD: Brak GCC ^(wymagane przez Fyne^)
-    echo.
-    echo Zainstaluj MSYS2: https://www.msys2.org/
-    echo Potem w terminalu MSYS2 uruchom:
-    echo   pacman -S mingw-w64-x86_64-gcc
-    echo.
-    echo Nastepnie dodaj do PATH:
-    echo   C:\msys64\mingw64\bin
-    echo.
-    pause
-    exit /b 1
-)
-
 echo Pobieranie zaleznosci...
 go mod tidy
 if errorlevel 1 (
     echo.
-    echo BLAD: Nie mozna pobrac zaleznosci. Sprawdz internet.
+    echo BLAD: Nie mozna pobrac zaleznosci. Sprawdz polaczenie z internetem.
     pause
     exit /b 1
 )
 
-echo.
 echo Kompilowanie...
+set CGO_ENABLED=0
 go build -ldflags "-H windowsgui" -o LosowanieKota.exe .
 if errorlevel 1 (
     echo.
