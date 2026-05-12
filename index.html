@@ -34,7 +34,7 @@
       border-radius: 1.5rem;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      max-width: 480px;
+      max-width: 520px;
       width: 100%;
       text-align: center;
     }
@@ -42,10 +42,10 @@
     #cat-img {
       width: 100%;
       border-radius: 1rem;
-      min-height: 300px;
-      object-fit: cover;
+      object-fit: contain;
+      max-height: 420px;
+      display: none;
       background: #0f3460;
-      display: block;
     }
 
     #placeholder {
@@ -69,22 +69,11 @@
       color: #fff;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
-      letter-spacing: 0.5px;
     }
 
-    button:hover {
-      background: #c73652;
-    }
-
-    button:active {
-      transform: scale(0.96);
-    }
-
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-      transform: none;
-    }
+    button:hover { background: #c73652; }
+    button:active { transform: scale(0.96); }
+    button:disabled { background: #555; cursor: not-allowed; transform: none; }
 
     #status {
       margin-top: 0.8rem;
@@ -92,15 +81,23 @@
       color: #aaa;
       min-height: 1.2rem;
     }
+
+    #nazwa {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #666;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <h1>🐱 Losowanie Kota</h1>
   <div class="card">
     <div id="placeholder">🐱</div>
-    <img id="cat-img" src="" alt="Losowy kot" style="display:none;" />
+    <img id="cat-img" alt="Losowy kot" />
     <button id="btn" onclick="losujKota()">Losuj kota!</button>
     <div id="status"></div>
+    <div id="nazwa"></div>
   </div>
 
   <script>
@@ -108,32 +105,46 @@
     const placeholder = document.getElementById('placeholder');
     const btn = document.getElementById('btn');
     const status = document.getElementById('status');
+    const nazwa = document.getElementById('nazwa');
 
-    async function losujKota() {
-      btn.disabled = true;
-      status.textContent = 'Szukam kota...';
+    let lista = [];
 
+    async function wczytajListe() {
       try {
-        const res = await fetch('https://api.thecatapi.com/v1/images/search');
-        if (!res.ok) throw new Error('Błąd sieci');
-        const [data] = await res.json();
-
-        img.onload = () => {
-          placeholder.style.display = 'none';
-          img.style.display = 'block';
-          status.textContent = 'Oto twój kot! 🎉';
-          btn.disabled = false;
-        };
-        img.onerror = () => {
-          status.textContent = 'Nie udało się załadować zdjęcia.';
-          btn.disabled = false;
-        };
-        img.src = data.url;
-      } catch (e) {
-        status.textContent = 'Błąd: ' + e.message;
-        btn.disabled = false;
+        const res = await fetch('koty/lista.json');
+        if (!res.ok) throw new Error();
+        lista = await res.json();
+        if (lista.length === 0) throw new Error('pusta');
+        status.textContent = `Znaleziono ${lista.length} kotów. Kliknij losuj!`;
+      } catch {
+        status.textContent = '⚠️ Brak koty/lista.json — uruchom generuj-liste.py';
+        btn.disabled = true;
       }
     }
+
+    function losujKota() {
+      if (lista.length === 0) return;
+      const plik = lista[Math.floor(Math.random() * lista.length)];
+
+      btn.disabled = true;
+      status.textContent = 'Losuję...';
+      nazwa.textContent = '';
+
+      img.onload = () => {
+        placeholder.style.display = 'none';
+        img.style.display = 'block';
+        status.textContent = 'Oto twój kot! 🎉';
+        nazwa.textContent = plik;
+        btn.disabled = false;
+      };
+      img.onerror = () => {
+        status.textContent = `Nie można załadować: ${plik}`;
+        btn.disabled = false;
+      };
+      img.src = 'koty/' + encodeURIComponent(plik);
+    }
+
+    wczytajListe();
   </script>
 </body>
 </html>
