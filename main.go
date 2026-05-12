@@ -1,13 +1,14 @@
 package main
 
 import (
+	"embed"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io/fs"
 	"math"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -17,6 +18,9 @@ import (
 	_ "golang.org/x/image/webp"
 	"golang.org/x/sys/windows"
 )
+
+//go:embed all:koty
+var kotyFS embed.FS
 
 // ── Win32 constants ──────────────────────────────────────────────────────────
 
@@ -171,12 +175,12 @@ var (
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 func listCats() []string {
-	entries, _ := os.ReadDir("koty")
+	entries, _ := fs.ReadDir(kotyFS, "koty")
 	exts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
 	var out []string
 	for _, e := range entries {
 		if !e.IsDir() && exts[strings.ToLower(filepath.Ext(e.Name()))] {
-			out = append(out, filepath.Join("koty", e.Name()))
+			out = append(out, "koty/"+e.Name())
 		}
 	}
 	return out
@@ -294,7 +298,7 @@ func wndProc(hwnd, message, wParam, lParam uintptr) uintptr {
 
 	case wmKatLoaded:
 		idx := int(wParam)
-		f, err := os.Open(cats[idx])
+		f, err := kotyFS.Open(cats[idx])
 		if err == nil {
 			img, _, decErr := image.Decode(f)
 			f.Close()
